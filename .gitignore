@@ -1,2 +1,2 @@
 .env
-rows.xml
+docker/volumes/importer/rows.xml
