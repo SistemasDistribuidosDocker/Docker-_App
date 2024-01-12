@@ -1,4 +1,5 @@
-version: "3.2"
+version: "3.8"
+name: sd
 services:
 
   auth-db:
@@ -8,10 +9,15 @@ services:
       - auth_data:/var/lib/postgresql/data/
     ports:
       - "$AUTH_DB_PORT:5432"
+    networks:
+      - auth
 
   auth-api:
     container_name: auth-api
     build: docker/images/javascript
+    networks:
+      - auth
+      - common
     volumes:
       - ./src/auth-api:/app
     ports:
@@ -27,10 +33,15 @@ services:
       - bl_data:/var/lib/postgresql/data/
     ports:
       - "$BL_DB_PORT:5432"
+    networks:
+      - bl
 
   bl-api:
     container_name: bl-api
     build: docker/images/javascript
+    networks:
+      - bl
+      - common
     volumes:
       - ./src/bl-api:/app
     ports:
@@ -45,6 +56,8 @@ services:
   importer:
     container_name: importer
     build: docker/images/elixir
+    networks:
+      - bl
     volumes:
       - ./docker/volumes/importer:/data
       - ./src/importer:/app
@@ -54,6 +67,8 @@ services:
   frontend:
     container_name: frontend
     build: docker/images/javascript
+    networks:
+      - common
     volumes:
       - ./src/web:/app
     ports:
@@ -62,6 +77,14 @@ services:
       - USE_DEV_MODE
       - PORT=80
       - REACT_APP_API_URL=http://localhost:$BL_API_PORT
+
+networks:
+  common:
+    driver: bridge
+  auth:
+    driver: bridge
+  bl:
+    driver: bridge
 
 volumes:
   auth_data:

@@ -6,5 +6,5 @@ CREATE TABLE public.teachers (
 	updated_on      TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-INSERT INTO teachers(name, city) VALUES('Luis Teofilo', 'Porto');
+INSERT INTO teachers(name, city) VALUES('Luís Teófilo', 'Porto');
 INSERT INTO teachers(name, city) VALUES('Ricardo Castro', 'Braga');
