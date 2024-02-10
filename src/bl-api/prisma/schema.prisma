@@ -10,12 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Teacher {
-  name       String   @id
-  city       String
-  createdOn  DateTime @default(now()) @map("created_on")
-  updatedOn  DateTime @updatedAt @map("updated_on")
-
-  @@map("teachers")
+model BabyNames {
+  id   String @id 
+  birthYear  Int
+  gender  String
+  name  String
+  count Int
+  rank Int
+  ethnicity Ethnicity  @relation(fields: [ethnicityId], references: [id])
+  ethnicityId Int
 }
 
+model Ethnicity{
+  id Int @id @default(autoincrement())
+  ethnicity String
+  babyNames BabyNames[]
+}
