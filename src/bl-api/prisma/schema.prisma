@@ -10,15 +10,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model BabyNames {
-  id   String @id 
-  birthYear  Int
-  gender  String
-  name  String
-  count Int
-  rank Int
-  ethnicity Ethnicity  @relation(fields: [ethnicityId], references: [id])
-  ethnicityId Int
+model Nutri {
+    id Int @id @default(autoincrement())
+    yearstart Int
+    yearend Int
+    locationabbr String
+    locationdesc: String;
+    datasource: String;
+    class: String;
+    topic: string;
+    question: string;
+    data_value_type: string;
+    data_value: number;
+    data_value_alt: number;
+    low_confidence_limit: number;
+    high_confidence_limit: number;
+    sample_size: number;
+    race_ethnicity: string;
+    classid: string;
+    questionid: string;
+    datavaluetypeid: string;
+    locationid: number;
+    stratificationcategory1: string;
+    stratification1: string;
+    stratificationcategoryid1: string;
+    stratificationid1: string;
 }
 
 model Ethnicity{

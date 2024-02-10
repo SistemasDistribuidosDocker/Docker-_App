@@ -6,7 +6,7 @@ import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class nutriService {
-    checkIfnutriExists(id: string) {
+    checkIfnutriExists(id: number) {
         throw new Error("Method not implemented.");
     }
     getnutri(id: string): import("./nutri.model").NutriDto | PromiseLike<import("./nutri.model").NutriDto> {
@@ -95,9 +95,5 @@ export class nutriService {
         })
     }
 
-    async function createNutri(data: NutriCreateInput) {
-        return await Prisma.nutri.create({
-            data,
-        });
-    }
+    
 }
