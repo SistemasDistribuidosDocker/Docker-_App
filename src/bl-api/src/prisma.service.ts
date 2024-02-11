@@ -4,7 +4,13 @@ import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit{
-    nutri: any;
+    private _nutri: any;
+    public get nutri(): any {
+        return this._nutri;
+    }
+    public set nutri(value: any) {
+        this._nutri = value;
+    }
     async onModuleInit() {
         await this.$connect();
     }
