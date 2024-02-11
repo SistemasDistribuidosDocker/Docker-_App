@@ -1,10 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Prisma } from "@prisma/client";
-import { DefaultArgs } from "@prisma/client/runtime/library";
-import { min } from "class-validator";
 import { IsInt, IsString, Min } from "class-validator";
 
-export type PrismanutriType = {
+export interface PrismanutriType {
     id: number;
     yearstart: number;
     yearend: number;
@@ -32,28 +29,24 @@ export type PrismanutriType = {
 }
 
 export class NutriDto {
-    static fromTable(base: PrismanutriType) {
+    static fromTable(base: PrismanutriType): NutriDto {
         const nutri = new NutriDto();
 
-        nutri.yearstart = base.yearstart
-
+        nutri.yearstart = base.yearstart;
+        // Copie outros campos conforme necessário
         return nutri;
     }
 
     @ApiProperty()
-    @IsString()
+    @IsInt()
     id: number;
 
-    @ApiProperty({
-        description: 'Birthday year',
-        minimum: 1970
-    })
+    @ApiProperty()
     @IsInt()
-    @Min(0)
     yearstart: number;
 
+    @ApiProperty()
     @IsInt()
-    @Min(0)
     yearend: number;
     
     @ApiProperty()
@@ -62,19 +55,81 @@ export class NutriDto {
 
     @ApiProperty()
     @IsString()
-    ethnicity: string;
+    locationdesc: string;
 
     @ApiProperty()
     @IsString()
-    name: string;
+    datasource: string;
+
+    @ApiProperty()
+    @IsString()
+    class: string;
+
+    @ApiProperty()
+    @IsString()
+    topic: string;
+
+    @ApiProperty()
+    @IsString()
+    question: string;
+
+    @ApiProperty()
+    @IsString()
+    data_value_type: string;
 
     @ApiProperty()
     @IsInt()
-    @Min(0)
-    count: number;
+    data_value: number;
 
     @ApiProperty()
     @IsInt()
-    @Min(1)
-    rank: number;
+    data_value_alt: number;
+
+    @ApiProperty()
+    @IsInt()
+    low_confidence_limit: number;
+    
+    @ApiProperty()
+    @IsInt()
+    high_confidence_limit: number;
+    
+    @ApiProperty()
+    @IsInt()
+    sample_size: number;
+    
+    @ApiProperty()
+    @IsString()
+    race_ethnicity: string;
+    
+    @ApiProperty()
+    @IsString()
+    classid: string;
+    
+    @ApiProperty()
+    @IsString()
+    questionid: string;
+    
+    @ApiProperty()
+    @IsString()
+    datavaluetypeid: string;
+    
+    @ApiProperty()
+    @IsInt()
+    locationid: number;
+    
+    @ApiProperty()
+    @IsString()
+    stratificationcategory1: string;
+    
+    @ApiProperty()
+    @IsString()
+    stratification1: string;
+    
+    @ApiProperty()
+    @IsString()
+    stratificationcategoryid1: string;
+    
+    @ApiProperty()
+    @IsString()
+    stratificationid1: string;
 }

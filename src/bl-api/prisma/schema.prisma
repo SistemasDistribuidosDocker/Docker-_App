@@ -15,30 +15,24 @@ model Nutri {
     yearstart Int
     yearend Int
     locationabbr String
-    locationdesc: String;
-    datasource: String;
-    class: String;
-    topic: string;
-    question: string;
-    data_value_type: string;
-    data_value: number;
-    data_value_alt: number;
-    low_confidence_limit: number;
-    high_confidence_limit: number;
-    sample_size: number;
-    race_ethnicity: string;
-    classid: string;
-    questionid: string;
-    datavaluetypeid: string;
-    locationid: number;
-    stratificationcategory1: string;
-    stratification1: string;
-    stratificationcategoryid1: string;
-    stratificationid1: string;
-}
-
-model Ethnicity{
-  id Int @id @default(autoincrement())
-  ethnicity String
-  babyNames BabyNames[]
+    locationdesc String
+    datasource String
+    class String
+    topic String
+    question String;
+    data_value_type String;
+    data_value Int
+    data_value_alt Int
+    low_confidence_limit Int
+    high_confidence_limit Int
+    sample_size Int
+    race_ethnicity String
+    classid String
+    questionid String
+    datavaluetypeid String
+    locationid Int
+    stratificationcategory1 String
+    stratification1 String
+    stratificationcategoryid1 String
+    stratificationid1 String
 }

@@ -1,20 +1,18 @@
-import {Tab, Tabs} from "@mui/material";
-import Sections from "./Sections";
+import {  Tabs } from "@mui/material";
+import { Link } from "react-router-dom";
 
-function Menu({selectedTab = Sections[0].id, changeSelectedTab}) {
+function Menu() {
 
     return (
         <div className={"Menu"}>
             <div className={"Logo"}>
-                <img src={"logo512.png"} alt={""}/>
+                <img src={"logo512.png"} alt={""} />
                 <div className={"Title"}>
                     Distributed Services
                 </div>
             </div>
-            <Tabs value={selectedTab} orientation={"vertical"} centered onChange={changeSelectedTab}>
-                {
-                    Sections.map(({id, label}) => <Tab key={id} value={id} label={label}/>)
-                }
+            <Tabs>
+                <Link to={'/register'}>Register</Link>
             </Tabs>
         </div>
     );

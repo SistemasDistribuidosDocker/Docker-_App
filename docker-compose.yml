@@ -77,10 +77,10 @@ services:
     volumes:
       - ./src/web:/app
     ports:
-      - "$FRONTEND_PORT:80"
+      - "$FRONTEND_PORT:81"
     environment:
       - USE_DEV_MODE
-      - PORT=80
+      - PORT=81
       - REACT_APP_API_URL=http://localhost:$BL_API_PORT
 
 

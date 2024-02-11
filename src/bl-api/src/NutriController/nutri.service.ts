@@ -1,99 +1,44 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { NutriDto } from "./nutri.model";
-import { Prisma } from "@prisma/client";
-
 
 @Injectable()
-export class nutriService {
-    checkIfnutriExists(id: number) {
-        throw new Error("Method not implemented.");
-    }
-    getnutri(id: string): import("./nutri.model").NutriDto | PromiseLike<import("./nutri.model").NutriDto> {
-        throw new Error("Method not implemented.");
-    }
-    getAllnutri() {
-        throw new Error("Method not implemented.");
+export class NutriService {
+    constructor(private prisma: PrismaService) {}
+
+    async getAllNutri(): Promise<NutriDto[]> {
+        const nutris = await this.prisma.nutri.findMany();
+        return nutris.map(NutriDto.fromTable);
     }
 
-    constructor(private prisma: PrismaService) { }
-
-    getAllNutri() {
-        return this.prisma.nutri.findMany()
+    async getNutri(id: string): Promise<NutriDto | null> {
+        const nutri = await this.prisma.nutri.findFirst({ where: { id } });
+        return nutri ? NutriDto.fromTable(nutri) : null;
     }
 
-    async getNutri(id: string) {
-        const Nutri = await this.prisma.nutri.findFirst({ where: { id: String(id) } });
-        if (Nutri) {
-            return NutriDto.fromTable(Nutri);
+    async checkIfNutriExists(id: string): Promise<boolean> {
+        const nutri = await this.prisma.nutri.findFirst({ where: { id } });
+        return Boolean(nutri);
+    }
+
+    async createNutri(data: NutriDto): Promise<NutriDto> {
+        const createdNutri = await this.prisma.nutri.create({ data });
+        return NutriDto.fromTable(createdNutri);
+    }
+
+    async updateNutri(id: string, data: NutriDto): Promise<NutriDto | null> {
+        const existingNutri = await this.prisma.nutri.findFirst({ where: { id } });
+        if (!existingNutri) {
+            throw new NotFoundException(`Nutri with ID ${id} not found.`);
         }
-        return null
-    }
-    
-    private async transformNutri(data: NutriDto): Promise<Prisma.NutriCreateInput> {
-        const ethnicity = await this.prisma.ethnicity.findFirst({
-            where: {
-                ethnicity: data.ethnicity
-            },
+        const updatedNutri = await this.prisma.nutri.update({
+            where: { id },
+            data
         });
-        return {
-            id: data.id,
-            birthYear: data.birthYear,
-            gender: data.gender,
-            ethnicity: {
-                create: !ethnicity ? {
-                    ethnicity: data.ethnicity
-                } : undefined,
-                connectOrCreate: ethnicity ? {
-                    create: {
-                        ethnicity: data.ethnicity
-                    },
-                    where: {
-                        id: ethnicity.id
-                    }
-                } : undefined
-            }, name: data.name,
-            count: data.count,
-            rank: data.rank
-        }
-    }
-
-    async checkIfNutriExists(id: string) {
-        const nutri = await this.prisma.nutri.findFirst({
-            where: {
-                id,
-            }
-        });
-        return Boolean(nutri)
-    }
-
-    async createNutri(id: string, data: NutriDto) {
-        const nutri = await this.prisma.nutri.create({
-            data: await this.transformNutri(data),
-        })
-
-        if (nutri) {
-            return NutriDto.fromTable(nutri);
-        }
-        return null
-    }
-    async updateNutri(id: string, data: NutriDto) {
-        const nutri = await this.prisma.nutri.update({
-            where: { id: String(id) },
-            //ADD INFORMATION TO THE DATA HERE DONT FORGET
-            data: await this.transformNutri(data)
-        })
-        if (nutri) {
-            return NutriDto.fromTable(nutri);
-        }
-        return null
+        return NutriDto.fromTable(updatedNutri);
     }
 
     async deleteNutri(id: string): Promise<void> {
-        await this.prisma.babyNames.delete({
-            where: { id: String(id) }
-        })
+        await this.prisma.nutri.delete({ where: { id } });
     }
-
-    
 }
