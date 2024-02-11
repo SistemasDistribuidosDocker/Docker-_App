@@ -31,8 +31,8 @@ export class nutriController {
     @UseGuards(AuthGuard)
     @Role(RolesEnum.EDIT)
     @Post('nutri/:id')
-    @ApiResponse({ status: 200, description: 'Baby Name created with success' })
-    @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Id from babyname already exists.' })
+    @ApiResponse({ status: 200, description: 'Nutri created with success' })
+    @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Id from Nutri already exists.' })
     async postNutri(@Param('id') id: string, @Body() postData: NutriDto): Promise<NutriDto> {
         if (await this.NutriService.checkIfNutriExists(id)) {
             throw new HttpException('Id from nutri already exists', HttpStatus.CONFLICT);
@@ -56,7 +56,7 @@ export class nutriController {
     @UseGuards(AuthGuard)
     @Role(RolesEnum.EDIT)
     @Delete('nutri/:id')
-    @ApiResponse({ status: 200, description: 'Baby Name deleted with success' })
+    @ApiResponse({ status: 200, description: 'Nutri deleted with success' })
     @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Id from nutri doens\'t exist' })
     async deletenutri(@Param('id') id: string): Promise<void> {
         if (!(await this.NutriService.checkIfNutriExists(id))) {

@@ -8,10 +8,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Baby Names')
-    .setDescription('The Baby Names API description')
+    .setTitle('Nutrition')
+    .setDescription('The Nutrition API description')
     .setVersion('1.0')
-    .addTag('Baby Names')
+    .addTag('Nutrition')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document);

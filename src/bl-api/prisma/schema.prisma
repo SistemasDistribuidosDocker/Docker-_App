@@ -19,8 +19,8 @@ model Nutri {
     datasource String
     class String
     topic String
-    question String;
-    data_value_type String;
+    question String
+    data_value_type String
     data_value Int
     data_value_alt Int
     low_confidence_limit Int
