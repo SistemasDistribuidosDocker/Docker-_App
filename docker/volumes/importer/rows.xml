@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+    <row>
+        <row _id="row-cfqn-dcgx_kvqx" _uuid="00000000-0000-0000-45AE-25F4F80407B0" _position="0" _address="https://data.cdc.gov/resource/hn4x-zwk7/row-cfqn-dcgx_kvqx">
+            <yearstart>2020</yearstart>
+            <yearend>2020</yearend>
+            <locationabbr>US</locationabbr><locationdesc>National</locationdesc>
+            <datasource>Behavioral Risk Factor Surveillance System</datasource>
+            <class>Physical Activity</class><topic>Physical Activity - Behavior</topic>
+            <question>Percent of adults who engage in no leisure-time physical activity</question>
+            <data_value_type>Value</data_value_type>
+            <data_value>30.6</data_value>
+            <data_value_alt>30.6</data_value_alt>
+            <low_confidence_limit>29.4</low_confidence_limit>
+            <high_confidence_limit>31.8</high_confidence_limit>
+            <sample_size>31255.0</sample_size>
+            <race_ethnicity>Hispanic</race_ethnicity>
+            <classid>PA</classid><topicid>PA1</topicid>
+            <questionid>Q047</questionid>
+            <datavaluetypeid>VALUE</datavaluetypeid>
+            <locationid>59</locationid>
+            <stratificationcategory1>Race/Ethnicity</stratificationcategory1>
+            <stratification1>Hispanic</stratification1>
+            <stratificationcategoryid1>RACE</stratificationcategoryid1>
+            <stratificationid1>RACEHIS</stratificationid1>
+        </row>
+        <row _id="row-ymu7~s3qv~ezr2" _uuid="00000000-0000-0000-59C7-8CE6ACC4F5C1" _position="0" _address="https://data.cdc.gov/resource/hn4x-zwk7/row-ymu7~s3qv~ezr2">
+            <yearstart>2014</yearstart>
+            <yearend>2014</yearend>
+            <locationabbr>GU</locationabbr>
+            <locationdesc>Guam</locationdesc>
+            <datasource>Behavioral Risk Factor Surveillance System</datasource>
+            <class>Obesity / Weight Status</class>
+            <topic>Obesity / Weight Status</topic>
+            <question>Percent of adults aged 18 years and older who have obesity</question>
+            <data_value_type>Value</data_value_type>
+            <data_value>29.3</data_value>
+            <data_value_alt>29.3</data_value_alt>
+            <low_confidence_limit>25.7</low_confidence_limit>
+            <high_confidence_limit>33.3</high_confidence_limit>
+            <sample_size>842</sample_size>
+            <education>High school graduate</education>
+            <geolocation latitude="13.444304" longitude="144.793731"/>
+            <classid>OWS</classid>
+            <topicid>OWS1</topicid>
+            <questionid>Q036</questionid>
+            <datavaluetypeid>VALUE</datavaluetypeid>
+            <locationid>66</locationid>
+            <stratificationcategory1>Education</stratificationcategory1>
+            <stratification1>High school graduate</stratification1>
+            <stratificationcategoryid1>EDU</stratificationcategoryid1>
+            <stratificationid1>EDUHSGRAD</stratificationid1>
+        </row>
+        <row _id="row-icms-ursd.6ba8" _uuid="00000000-0000-0000-24C2-03DC3BB1415E" _position="0" _address="https://data.cdc.gov/resource/hn4x-zwk7/row-icms-ursd.6ba8">
+            <yearstart>2013</yearstart>
+            <yearend>2013</yearend>
+            <locationabbr>US</locationabbr>
+            <locationdesc>National</locationdesc>
+            <datasource>Behavioral Risk Factor Surveillance System</datasource>
+            <class>Obesity / Weight Status</class>
+            <topic>Obesity / Weight Status</topic>
+            <question>Percent of adults aged 18 years and older who have obesity</question>
+            <data_value_type>Value</data_value_type>
+            <data_value>28.8</data_value>
+            <data_value_alt>28.8</data_value_alt>
+            <low_confidence_limit>28.1</low_confidence_limit>
+            <high_confidence_limit>29.5</high_confidence_limit>
+            <sample_size>62562</sample_size>
+            <income>$50,000 - $74,999</income>
+            <classid>OWS</classid>
+            <topicid>OWS1</topicid>
+            <questionid>Q036</questionid>
+            <datavaluetypeid>VALUE</datavaluetypeid>
+            <locationid>59</locationid>
+            <stratificationcategory1>Income</stratificationcategory1>
+            <stratification1>$50,000 - $74,999</stratification1>
+            <stratificationcategoryid1>INC</stratificationcategoryid1>
+            <stratificationid1>INC5075</stratificationid1>
+        </row>
+        <row _id="row-b526_hb8d-xnsa" _uuid="00000000-0000-0000-FB9B-D2AE43C68AF3" _position="0" _address="https://data.cdc.gov/resource/hn4x-zwk7/row-b526_hb8d-xnsa">
+            <yearstart>2013</yearstart><yearend>2013</yearend
+            ><locationabbr>US</locationabbr>
+            <locationdesc>National</locationdesc>
+            <datasource>Behavioral Risk Factor Surveillance System</datasource>
+            <class>Obesity / Weight Status</class>
+            <topic>Obesity / Weight Status</topic>
+            <question>Percent of adults aged 18 years and older who have an overweight classification</question>
+            <data_value_type>Value</data_value_type>
+            <data_value>32.7</data_value>
+            <data_value_alt>32.7</data_value_alt>
+            <low_confidence_limit>31.9</low_confidence_limit>
+            <high_confidence_limit>33.5</high_confidence_limit>
+            <sample_size>60069</sample_size>
+            <income>Data not reported</income>
+            <classid>OWS</classid>
+            <topicid>OWS1</topicid>
+            <questionid>Q037</questionid>
+            <datavaluetypeid>VALUE</datavaluetypeid>
+            <locationid>59</locationid>
+            <stratificationcategory1>Income</stratificationcategory1>
+            <stratification1>Data not reported</stratification1>
+            <stratificationcategoryid1>INC</stratificationcategoryid1>
+            <stratificationid1>INCNR</stratificationid1>
+        </row>
+        <row _id="row-kqar_nbr9~5ehr" _uuid="00000000-0000-0000-00F0-1C57B240908E" _position="0" _address="https://data.cdc.gov/resource/hn4x-zwk7/row-kqar_nbr9~5ehr">
+            <yearstart>2015</yearstart>
+            <yearend>2015</yearend>
+            <locationabbr>US</locationabbr>
+            <locationdesc>National</locationdesc>
+            <datasource>Behavioral Risk Factor Surveillance System</datasource>
+            <class>Physical Activity</class><topic>Physical Activity - Behavior</topic>
+            <question>Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)</question>
+            <data_value_type>Value</data_value_type>
+            <data_value>26.6</data_value>
+            <data_value_alt>26.6</data_value_alt>
+            <low_confidence_limit>25.6</low_confidence_limit>
+            <high_confidence_limit>27.6</high_confidence_limit>
+            <sample_size>30904</sample_size>
+            <income>Less than $15,000</income>
+            <classid>PA</classid>
+            <topicid>PA1</topicid>
+            <questionid>Q045</questionid>
+            <datavaluetypeid>VALUE</datavaluetypeid>
+            <locationid>59</locationid>
+            <stratificationcategory1>Income</stratificationcategory1>
+            <stratification1>Less than $15,000</stratification1>
+            <stratificationcategoryid1>INC</stratificationcategoryid1>
+            <stratificationid1>INCLESS15</stratificationid1>
+        </row>
+    </row>
+</response>
