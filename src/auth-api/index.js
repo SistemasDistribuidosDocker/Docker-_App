@@ -1,201 +1,300 @@
-// Update with your config settings.
-require('dotenv').config()
-
 const express = require('express');
-
+const bodyParser = require('body-parser');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-var bodyParser = require('body-parser')
+const { isEmail } = require('validator');
 
 const app = express();
-const port = 8080;
+const PORT = 3000;
 
-// parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
-const database = knex({
-    client: process.env.CLIENT,
-    connection: {
-        host: process.env.HOST,
-        port: process.env.PORT,
-        user: process.env.USER,
-        database: process.env.DATABASE,
-        password: process.env.USER_PASSWORD
+const db = knex(require('./knexfile'));
+
+// middleware de autorização
+const authorizeUser = (roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Acesso proibido' });
     }
+    next();
+  };
+};
+
+//middleware de autenticação
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token de autenticação não fornecido' });
+  }
+
+  console.log("Token recebido: ", token);
+
+  jwt.verify(token, "secret", (err, decodedToken) => {
+    if (err) {
+      console.error("Erro ao verificar o token:", err);
+      return res.status(401).json({ message: 'Token de autenticação inválido', token: token });
+    }
+
+    console.log("Token decodificado:", decodedToken);
+
+    // verifica se o token tem o userid
+    if (!decodedToken.userId) {
+      return res.status(401).json({ message: 'Token de autenticação inválido - ID do utilizador não encontrado' });
+    }
+
+    // atribui o id e a role ao utilizador
+    req.user = {
+      id: decodedToken.userId,
+      role: decodedToken.role
+    };
+
+    console.log("Id do user: ", decodedToken.userId);
+    console.log("role do user: ", decodedToken.role);
+
+    next();
+  });
+};
+
+/**
+ *  ENDPOINTS DE AUTENTICAÇÃO
+ * **/
+
+// rota de registro
+app.post('/register', async (req, res) => {
+  const { user, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    // verifica se o email é valido com o validator
+    if (!isEmail(email)) {
+      return res.status(400).json({ message: 'Por favor, insira um email válido' });
+    }
+
+    // verifica se o email ja existe na base de dados
+    const existingUser = await db('users').where('email', email).first();
+    if (existingUser) {
+      return res.status(400).json({ message: 'Este email já está registrado' });
+    }
+
+    await db('users').insert({ user, email, password: hashedPassword });
+    res.status(201).json({ message: 'Utilizador registrado com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao registrar utilizador', error: error.message });
+  }
 });
 
-// Rota para obter dados do PostgreSQL
-app.post('/api/login', async (req, res) => {
-    try {
-        const { user, password } = req.body;
+// rota de login
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  console.log("jwt: ", process.env.JWT_SECRET)
+  try {
+    const user = await db('users').where({ email }).first();
 
-        const users = await database.table('Users')
-            .select('*')
-            .where({
-                User: user,
-            })
-            .first();
-
-        if (!users) {
-            res.status(404).json({ error: 'User not found' })
-            return
-        }
-        const newPassword = users.Password;
-        const comparePassword = await bcrypt.compare(password, newPassword);
-        if (!comparePassword) {
-            res.status(404).json({ error: 'Credentials not found' })
-            return
-        }
-        var token = jwt.sign({ user: users.User, id: users.id, role: users.Role }, 'shhhhh');
-        res.json({ token });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro interno do servidor' });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
+
+    const tokenPayload = {
+      userId: user.id,
+      role: user.role 
+    };
+
+    const token = jwt.sign(tokenPayload, "secret", { expiresIn: '1h' });
+
+    res.json({ token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao fazer login' });
+  }
 });
 
-app.post('/api/create_user', async (req, res) => {
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
+/**
+ *  ENDPOINTS DO USER
+ * **/
 
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
+// rota para editar o user, apenas o admin pode editar a role
+app.put('/user/editar/:id', authenticateUser, authorizeUser(['admin', 'edit', 'view']), async (req, res) => {
+  const userId = req.params.id;
+  const { user, password, role } = req.body;
+  const loggedInUserId = req.user.id;
+  const loggedInUserrole = req.user.role;
+
+  try {
+    // busca os dados do user
+    const existingUser = await db('users').where({ id: userId }).first();
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Utilizador não encontrado' });
     }
 
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
+    // Somente o admin pode editar a role do usuário
+    if (loggedInUserrole !== 'admin') {
+      delete req.body.role; // Remove a tentativa de edição da regra se o usuário não for admin
     }
 
-    const { user, password, role } = req.body;
-    try {
-        const newPassword = await bcrypt.hash(password, 10);
-        await database.table('Users').insert({ User: user, Password: newPassword, Role: role });
-
-        const users = await database.table('Users').where({ User: user, Password: newPassword, Role: role });
-        res.status(201).json({ id: users[0].id });
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
+    // Verifica se o usuário tem permissão para editar o usuário
+    if (userId !== loggedInUserId.toString() && loggedInUserrole !== 'admin') {
+      return res.status(403).json({ error: 'Acesso proibido' });
     }
+
+    // Atualiza o nome do user apenas se for fornecido
+    if (user) existingUser.user = user;
+
+    // Encripta a senha com o bcrypt
+    if (password) {
+      existingUser.password = await bcrypt.hash(password, 10);
+    }
+
+    // Atualiza a role do usuário apenas se o usuário for admin
+    if (role && loggedInUserrole === 'admin') {
+      existingUser.role = role;
+    }
+
+    // Atualiza a base de dados
+    await db('users').where({ id: userId }).update(existingUser);
+
+    res.status(200).json({ message: 'Dados do utilizador atualizados com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao atualizar dados do utilizador', error: error.message });
+  }
 });
 
-app.put('/api/edit_user/:id', async (req, res) => {
-    const id = req.params.id;
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
 
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
+// rota para eliminar utilizadores
+app.delete('/users/eliminar/:id', authenticateUser, authorizeUser(['admin', 'edit', 'view']), async (req, res) => {
+  const userIdToDelete = req.params.id;
+  const loggedInUserId = req.user.id;
+  const loggedInUserrole = req.user.role;
+
+  try {
+    // verifica se o user existe
+    const existingUser = await db('users').where({ id: userIdToDelete }).first();
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Utilizador não encontrado' });
     }
 
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
+    // verifica se quem está a editar é o user logado ou admin
+    if (userIdToDelete !== loggedInUserId.toString() && loggedInUserrole !== 'admin') {
+      return res.status(403).json({ error: 'Acesso proibido' });
     }
 
-    const { user, password, role } = req.body;
-    try {
-        const newPassword = await bcrypt.hash(password, 10);
-        await database.table('Users').where({ id: id }).update({ User: user, Password: newPassword, Role: role });
-        res.status(201).json({ message: 'User Deleted successfully!' });
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
-    }
+    // elimina o utilizador da base de dados
+    await db('users').where({ id: userIdToDelete }).del();
+
+    res.status(200).json({ message: 'Utilizador eliminado com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao eliminar utilizador', error: error.message });
+  }
 });
 
-app.delete('/api/delete_user/:id', async (req, res) => {
-    const id = req.params.id;
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
-
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-
-    try {
-        await database.table('Users').where({ id: id }).delete();
-        res.status(201).json({ message: 'User Deleted successfully!' });
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
-    }
+app.get('/users', authenticateUser, authorizeUser(['admin']), async (req, res) => {
+  try {
+    const users = await db('users').select('id', 'user', 'email');
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao obter informações dos utilizadores', error: error.message });
+  }
 });
 
-app.get('/api/verify_token', async (req, res) => {
-    try {
-        const resu = req.headers['authorization'];
-        if (!resu) {
-            res.status(401).json({ error: 'Not found' })
-            return
-        }
-        const token = resu.replace("Bearer ", "");
-        var decoded = jwt.verify(token, 'shhhhh');
+/**
+ *  ENDPOINTS DA tabela nutri
+ * **/
 
-        const users = await database.table('Users')
-            .select('*')
-            .where({
-                User: decoded.user,
-            })
-            .first();
+app.post('/nutri/adicionar', authenticateUser, authorizeUser(['admin', 'edit']), async (req, res) => {
+  const { yearstart, yearend, locationabbr } = req.body;
+  const userId = req.user.id;
 
-        if (!users) {
-            res.status(401).json({ error: 'Not found' })
-            return
-        }
-        res.json({ user: users.User, id: users.id, role: users.Role });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro interno do servidor' });
+  try {
+    // guarda os dados na base de dados
+    const nutriId = await db('nutri').insert({
+      yearstart, 
+      yearend, 
+      locationabbr,
+      user_id : userId
+    });
 
+    res.status(201).json({ message: 'Dado adicionado com sucesso a tabela nutri', nutriId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao adicionar dados a tabela nutri', error: error.message });
+  }
+});
+
+// rota para editar Nutri
+app.put('/nutri/editar/:id', authenticateUser, authorizeUser(['admin', 'edit']), async (req, res) => {
+  const nutriId = req.params.id;
+  const userId = req.user.id;
+  const { yearstart, yearend, locationabbr } = req.body;
+
+  try {
+    // verifica se a Nutri existe
+    const existingNutri = await db('nutri').where({ id: nutriId }).first();
+    if (!existingNutri) {
+      return res.status(404).json({ error: 'Nutri não encontrada' });
     }
-});
-const server = app.listen(port, () => {
-    console.log(`Servidor está rodando em http://localhost:${port}`);
+
+    // verifica se o user é admin/dono da Nutri
+    if (userId !== existingNutri.user_id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Acesso proibido' });
+    }
+
+    // atualiza na base de dados
+    await db('nutri').where({ id: nutriId }).update({
+      yearstart, 
+      yearend, 
+      locationabbr
+    });
+
+    res.status(200).json({ message: 'Informações da Nutri atualizadas com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao atualizar informações da Nutri', error: error.message });
+  }
 });
 
-module.exports = {
-    app,
-    server,
-    database
-}
+// rota para eliminar nutri
+app.delete('/nutri/eliminar/:id', authenticateUser, authorizeUser(['admin', 'edit']), async (req, res) => {
+  const NutriId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // verifica se a Nutri existe
+    const existingNutri = await db('nutri').where({ id: NutriId }).first();
+    if (!existingNutri) {
+      return res.status(404).json({ error: 'Nutri não encontrada' });
+    }
+
+    // verifica se o user é admin/dono da Nutri
+    if (req.user.role !== 'admin' && existingNutri.user_id !== userId) {
+      return res.status(403).json({ error: 'Acesso proibido' });
+    }
+
+    // elimina da base de dados
+    await db('nutri').where({ id: NutriId }).del();
+
+    res.status(200).json({ message: 'Dados da tabela Nutri eliminados com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao eliminar Nutri', error: error.message });
+  }
+});
+
+app.get('/nutri', async (req, res) => {
+  try {
+    const nutri = await db('nutri').select('id', 'yearstart', 'yearend', 'locationabbr');
+    res.json(nutri);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao obter informações da tabela nutri', error: error.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

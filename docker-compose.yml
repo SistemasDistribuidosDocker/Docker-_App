@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   auth-db:
     container_name: auth-db
     build: docker/images/db
@@ -11,7 +10,6 @@ services:
       - "$AUTH_DB_PORT:5432"
     networks:
       - auth
-
 
   auth-api:
     container_name: auth-api
@@ -27,7 +25,6 @@ services:
       - USE_DEV_MODE
       - PORT=80
 
-
   bl-db:
     container_name: bl-db
     build: docker/images/db
@@ -37,7 +34,6 @@ services:
       - "$BL_DB_PORT:5432"
     networks:
       - bl
-
 
   bl-api:
     container_name: bl-api
@@ -56,7 +52,6 @@ services:
       - SWAGGER_PORT=8080
       - DATABASE_URL=postgresql://sd:sd@bl-db:5432/sd?schema=public
 
-
   importer:
     container_name: importer
     build: docker/images/elixir
@@ -67,7 +62,6 @@ services:
       - ./src/importer:/app
     environment:
       - USE_DEV_MODE
-
 
   frontend:
     container_name: frontend
@@ -83,7 +77,6 @@ services:
       - PORT=81
       - REACT_APP_API_URL=http://localhost:$BL_API_PORT
 
-
 networks:
   common:
     driver: bridge
@@ -91,7 +84,6 @@ networks:
     driver: bridge
   bl:
     driver: bridge
-
 
 volumes:
   auth_data:
