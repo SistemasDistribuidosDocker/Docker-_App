@@ -10,29 +10,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Nutri {
-    id Int @id @default(autoincrement())
-    yearstart Int
-    yearend Int
-    locationabbr String
-    locationdesc String
-    datasource String
-    class String
-    topic String
-    question String
-    data_value_type String
-    data_value Int
-    data_value_alt Int
-    low_confidence_limit Int
-    high_confidence_limit Int
-    sample_size Int
-    race_ethnicity String
-    classid String
-    questionid String
-    datavaluetypeid String
-    locationid Int
-    stratificationcategory1 String
-    stratification1 String
-    stratificationcategoryid1 String
-    stratificationid1 String
+model Teacher {
+  name       String   @id
+  city       String
+  createdOn  DateTime @default(now()) @map("created_on")
+  updatedOn  DateTime @updatedAt @map("updated_on")
+
+  @@map("teachers")
 }
+

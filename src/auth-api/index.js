@@ -1,201 +1,219 @@
-// Update with your config settings.
-require('dotenv').config()
-
 const express = require('express');
-
+const bodyParser = require('body-parser');
 const knex = require('knex');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
-var bodyParser = require('body-parser')
+const bcrypt = require('bcrypt');
+
+const jwt = require('jsonwebtoken');
+const { isEmail } = require('validator');
 
 const app = express();
-const port = 8080;
+const PORT = 3000;
 
-// parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
-const database = knex({
-    client: process.env.CLIENT,
-    connection: {
-        host: process.env.HOST,
-        port: process.env.PORT,
-        user: process.env.USER,
-        database: process.env.DATABASE,
-        password: process.env.USER_PASSWORD
+const db = knex(require('./knexfile'));
+
+//middleware de autenticação
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token de autenticação não fornecido' });
+  }
+
+  console.log("Token recebido:", token);
+
+  jwt.verify(token, "segredo", (err, decodedToken) => {
+    if (err) {
+      console.error("Erro ao verificar o token:", err);
+      return res.status(401).json({ message: 'Token de autenticação inválido', token: token });
     }
+
+    console.log("Token decodificado:", decodedToken);
+
+    // Verifica se o token decodificado contém o campo userId
+    if (!decodedToken.userId) {
+      return res.status(401).json({ message: 'Token de autenticação inválido - ID do usuário não encontrado' });
+    }
+
+    // Atribui o ID do usuário ao objeto req.user
+    req.user = {
+      id: decodedToken.userId
+    };
+
+    next();
+  });
+};
+
+// Rota de registro
+app.post('/register', async (req, res) => {
+    const { user, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+  
+    try {
+      // verifica se o email é valido com o validator
+      if (!isEmail(email)) {
+        return res.status(400).json({ message: 'Por favor, insira um email válido' });
+      }
+  
+      // verifica se o email ja existe na base de dados
+      const existingUser = await db('users').where('email', email).first();
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este email já está registrado' });
+      }
+  
+      await db('users').insert({ user, email, password: hashedPassword });
+      res.status(201).json({ message: 'Usuário registrado com sucesso' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao registrar usuário', error: error.message });
+    }
+  });
+
+// Rota de login
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await db('users').where({ email }).first();
+    console.log(user)
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+
+    const token = jwt.sign({ userId: user.id }, "segredo", { expiresIn: '1h' });
+
+    res.json({ token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao fazer login' });
+  }
 });
 
-// Rota para obter dados do PostgreSQL
-app.post('/api/login', async (req, res) => {
+// Rota para editar senha e nome de usuário do usuário
+app.put('/user/editar', authenticateUser, async (req, res) => {
+  const userId = req.user.id; // ID do usuário logado
+  const { user, password } = req.body;
+
+  try {
+    // Verifica se o usuário que está tentando editar é o mesmo que está logado
+    const existingUser = await db('users').where({ id: userId }).first();
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Atualiza o nome de usuário se fornecido
+    if (user) existingUser.user = user;
+    
+    // Atualiza a senha se fornecida
+    if (password) {
+      // Hash da nova senha
+      existingUser.password = await bcrypt.hash(password, 10);
+    }
+
+    // Atualiza os dados do usuário no banco de dados
+    await db('users').where({ id: userId }).update(existingUser);
+
+    res.status(200).json({ message: 'Dados do usuário atualizados com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao atualizar dados do usuário', error: error.message });
+  }
+});
+
+
+//rota para eliminar utilizadores
+app.get('/user/eliminar/:id', async (req, res) => {
     try {
-        const { user, password } = req.body;
+        const userId = req.params.id;
 
-        const users = await database.table('Users')
-            .select('*')
-            .where({
-                User: user,
-            })
-            .first();
+        // Consulta ao banco de dados para buscar os dados do usuário com o ID fornecido
+        const user = await db('users').where({ id: userId }).first();
 
-        if (!users) {
-            res.status(404).json({ error: 'User not found' })
-            return
+        if (!user) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
         }
-        const newPassword = users.Password;
-        const comparePassword = await bcrypt.compare(password, newPassword);
-        if (!comparePassword) {
-            res.status(404).json({ error: 'Credentials not found' })
-            return
-        }
-        var token = jwt.sign({ user: users.User, id: users.id, role: users.Role }, 'shhhhh');
-        res.json({ token });
+
+        res.json(user);
     } catch (error) {
-        res.status(500).json({ error: 'Erro interno do servidor' });
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar dados do usuário.' });
     }
 });
 
-app.post('/api/create_user', async (req, res) => {
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
-
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    const { user, password, role } = req.body;
+app.post('/nutri/adicionar', authenticateUser, async (req, res) => {
+    const { nome, responsavel, contacto, morada } = req.body;
+    const userId = req.user.id; // ID do usuário logado
+  
     try {
-        const newPassword = await bcrypt.hash(password, 10);
-        await database.table('Users').insert({ User: user, Password: newPassword, Role: role });
-
-        const users = await database.table('Users').where({ User: user, Password: newPassword, Role: role });
-        res.status(201).json({ id: users[0].id });
+      // Inserir dados da escola no banco de dados
+      const escolaId = await db('nutri').insert({
+        nome,
+        responsavel,
+        contacto,
+        morada,
+        user_id: userId // Relaciona a escola ao usuário que a adicionou
+      });
+  
+      res.status(201).json({ message: 'Escola adicionada com sucesso', escolaId });
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao adicionar escola', error: error.message });
     }
-});
+  });
 
-app.put('/api/edit_user/:id', async (req, res) => {
-    const id = req.params.id;
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
-
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    const { user, password, role } = req.body;
+  // Rota para editar informações da escola
+  app.put('/nutri/editar/:id', authenticateUser, async (req, res) => {
+    const escolaId = req.params.id; // ID da escola a ser editada
+    const userId = req.user.id; // ID do usuário logado
+    const { nome, responsavel, contacto, morada } = req.body;
+  
     try {
-        const newPassword = await bcrypt.hash(password, 10);
-        await database.table('Users').where({ id: id }).update({ User: user, Password: newPassword, Role: role });
-        res.status(201).json({ message: 'User Deleted successfully!' });
+      // Verifica se a escola existe no banco de dados e pertence ao usuário logado
+      const existingEscola = await db('nutri').where({ id: escolaId, user_id: userId }).first();
+      if (!existingEscola) {
+        return res.status(404).json({ error: 'Escola não encontrada ou não pertence ao usuário' });
+      }
+  
+      // Atualiza os dados da escola
+      await db('nutri').where({ id: nutriId }).update({
+        nome,
+        responsavel,
+        contacto,
+        morada
+      });
+  
+      res.status(200).json({ message: 'Informações da escola atualizadas com sucesso' });
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
+      console.error(error);
+      res.status(500).json({ message: 'Erro ao atualizar informações da escola', error: error.message });
     }
+  });
+
+  // Rota para eliminar escola
+app.delete('/nutri/eliminar/:id', authenticateUser, async (req, res) => {
+  const escolaId = req.params.id; // ID da escola a ser eliminada
+  const userId = req.user.id; // ID do usuário logado
+
+  try {
+    // Verifica se a escola existe no banco de dados e pertence ao usuário logado
+    const existingEscola = await db('escolas').where({ id: escolaId, user_id: userId }).first();
+    if (!existingEscola) {
+      return res.status(404).json({ error: 'Escola não encontrada ou não pertence ao usuário' });
+    }
+
+    // Elimina a escola do banco de dados
+    await db('escolas').where({ id: escolaId }).del();
+
+    res.status(200).json({ message: 'Escola eliminada com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao eliminar escola', error: error.message });
+  }
 });
-
-app.delete('/api/delete_user/:id', async (req, res) => {
-    const id = req.params.id;
-    const resu = req.headers['authorization'];
-    if (!resu) {
-        res.status(401).json({ error: 'Not found' })
-        return
-    }
-    const token = resu.replace("Bearer ", "");
-    var decoded = jwt.verify(token, 'shhhhh');
-    const decodedUser = await database.table('Users')
-        .select('*')
-        .where({
-            User: decoded.user,
-        })
-        .first();
-
-    if (!decodedUser) {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-    if (decodedUser.Role !== 'Admin') {
-        res.status(401).json({ error: 'Not authorized' })
-        return
-    }
-
-
-    try {
-        await database.table('Users').where({ id: id }).delete();
-        res.status(201).json({ message: 'User Deleted successfully!' });
-    } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
-    }
+  
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
-
-app.get('/api/verify_token', async (req, res) => {
-    try {
-        const resu = req.headers['authorization'];
-        if (!resu) {
-            res.status(401).json({ error: 'Not found' })
-            return
-        }
-        const token = resu.replace("Bearer ", "");
-        var decoded = jwt.verify(token, 'shhhhh');
-
-        const users = await database.table('Users')
-            .select('*')
-            .where({
-                User: decoded.user,
-            })
-            .first();
-
-        if (!users) {
-            res.status(401).json({ error: 'Not found' })
-            return
-        }
-        res.json({ user: users.User, id: users.id, role: users.Role });
-    } catch (error) {
-        res.status(500).json({ error: 'Erro interno do servidor' });
-
-    }
-});
-const server = app.listen(port, () => {
-    console.log(`Servidor está rodando em http://localhost:${port}`);
-});
-
-module.exports = {
-    app,
-    server,
-    database
-}
