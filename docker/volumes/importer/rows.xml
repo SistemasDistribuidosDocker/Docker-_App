@@ -6,7 +6,8 @@
             <yearend>2020</yearend>
             <locationabbr>US</locationabbr><locationdesc>National</locationdesc>
             <datasource>Behavioral Risk Factor Surveillance System</datasource>
-            <class>Physical Activity</class><topic>Physical Activity - Behavior</topic>
+            <class>Physical Activity</class>
+            <topic>Physical Activity - Behavior</topic>
             <question>Percent of adults who engage in no leisure-time physical activity</question>
             <data_value_type>Value</data_value_type>
             <data_value>30.6</data_value>
