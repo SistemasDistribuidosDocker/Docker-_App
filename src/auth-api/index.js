@@ -61,7 +61,30 @@ const authenticateUser = (req, res, next) => {
 /**
  *  ENDPOINTS DE AUTENTICAÇÃO
  * **/
+// rota de registro de desenvolvimento
+app.post('/registerdev', async (req, res) => {
+  const { user, email, password,role } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
 
+  try {
+    // verifica se o email é valido com o validator
+    if (!isEmail(email)) {
+      return res.status(400).json({ message: 'Por favor, insira um email válido' });
+    }
+
+    // verifica se o email ja existe na base de dados
+    const existingUser = await db('users').where('email', email).first();
+    if (existingUser) {
+      return res.status(400).json({ message: 'Este email já está registrado' });
+    }
+
+    await db('users').insert({ user, email, password: hashedPassword,role });
+    res.status(201).json({ message: 'Utilizador registrado com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erro ao registrar utilizador', error: error.message });
+  }
+});
 // rota de registro
 app.post('/register', async (req, res) => {
   const { user, email, password } = req.body;
