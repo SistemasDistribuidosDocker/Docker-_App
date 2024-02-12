@@ -145,20 +145,18 @@ app.get('/user/eliminar/:id', async (req, res) => {
 });
 
 app.post('/nutri/adicionar', authenticateUser, async (req, res) => {
-    const { nome, responsavel, contacto, morada } = req.body;
+    const { yearstart, yearend, locationabbr} = req.body;
     const userId = req.user.id; // ID do usuário logado
-  
     try {
       // Inserir dados da escola no banco de dados
-      const escolaId = await db('nutri').insert({
-        nome,
-        responsavel,
-        contacto,
-        morada,
-        user_id: userId // Relaciona a escola ao usuário que a adicionou
+      const nutriId = await db('nutri').insert({
+        yearstart, 
+        yearend, 
+        locationabbr,
+        user_id: userId // Relaciona a Nutri ao usuário que a adicionou
       });
   
-      res.status(201).json({ message: 'Escola adicionada com sucesso', escolaId });
+      res.status(201).json({ message: 'Nutri adicionada com sucesso', escolaId });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Erro ao adicionar escola', error: error.message });
