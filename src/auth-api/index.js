@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const knex = require('knex');
 
 const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const jwt = require('jsonwebtoken');
 const { isEmail } = require('validator');
@@ -49,7 +50,7 @@ const authenticateUser = (req, res, next) => {
 // Rota de registro
 app.post('/register', async (req, res) => {
     const { user, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
   
     try {
       // verifica se o email é valido com o validator
