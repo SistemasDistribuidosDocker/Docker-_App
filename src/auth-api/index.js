@@ -100,6 +100,7 @@ app.post("/registerdev", async (req, res) => {
 app.post("/register", async (req, res) => {
   const { user, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
+  const role = "view"
 
   try {
     // verifica se o email é valido com o validator
@@ -115,7 +116,7 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Este email já está registrado" });
     }
 
-    await db("users").insert({ user, email, password: hashedPassword });
+    await db("users").insert({ user, email, password: hashedPassword, role });
     res.status(201).json({ message: "Utilizador registrado com sucesso" });
   } catch (error) {
     console.error(error);
